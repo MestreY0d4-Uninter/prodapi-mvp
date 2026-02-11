@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(uv:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(git init:*)",
+      "Bash(pkill:*)",
+      "Bash(RAW_KEY=\"XzWCSNm9dHmXLOVnFzG4Tpkic4nYlR94SZp6Gr1uw5c\")",
+      "Bash(__NEW_LINE_d8742bd91c42cf31__ echo \"=== RESUMO FINAL DOS TESTES ===\")",
+      "Bash(curl:*)",
+      "Bash(python -m json.tool)",
+      "Bash(__NEW_LINE_0532c8935781c0fd__ echo -e \"\\\\nRuns executados:\")",
+      "Bash(python:*)",
+      "Bash(__NEW_LINE_ecf6fd224a817d4c__ echo -e \"\\\\n=== Parando servidor ===\")",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
