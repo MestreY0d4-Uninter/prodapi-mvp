@@ -9,9 +9,9 @@ API de produtividade para automações com execução sob demanda e agendamento 
 - **Autenticação via API Keys** (SHA-256, criar/revogar)
 - **CRUD de Automações** com validação de configuração por tipo
 - **Execução Assíncrona** com lifecycle (queued → running → success/failed)
-- **Idempotência** via `X-Idempotency-Key` header
+- **Idempotência** via campo `idempotency_key` no body
 - **Agendamento Cron** com suporte a timezones (APScheduler)
-- **Histórico de Runs** com paginação cursor-based
+- **Histórico de Runs** com paginação offset-based
 - **Webhooks** com retry automático e backoff exponencial
 - **2 Automações Built-in:**
   - **daily_digest**: Resume execuções do sistema e envia para webhook

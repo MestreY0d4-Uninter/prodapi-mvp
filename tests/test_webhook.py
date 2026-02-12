@@ -7,7 +7,10 @@ from prodapi.services.webhook import deliver_webhook
 
 
 async def test_deliver_webhook_success() -> None:
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+    with (
+        patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post,
+        patch("prodapi.services.webhook.logger") as mock_logger,
+    ):
         mock_post.return_value.status_code = 200
 
         await deliver_webhook(
@@ -21,10 +24,14 @@ async def test_deliver_webhook_success() -> None:
         )
 
         assert mock_post.called
+        mock_logger.info.assert_called_once()
 
 
 async def test_deliver_webhook_retry_on_error() -> None:
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+    with (
+        patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post,
+        patch("prodapi.services.webhook.logger") as mock_logger,
+    ):
         mock_post.side_effect = httpx.HTTPStatusError(
             "Error", request=None, response=AsyncMock(status_code=500)
         )
@@ -41,10 +48,14 @@ async def test_deliver_webhook_retry_on_error() -> None:
         )
 
         assert mock_post.call_count == 2
+        mock_logger.error.assert_called_once()
 
 
 async def test_deliver_webhook_network_error() -> None:
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+    with (
+        patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post,
+        patch("prodapi.services.webhook.logger") as mock_logger,
+    ):
         mock_post.side_effect = httpx.RequestError("Network error")
 
         await deliver_webhook(
@@ -59,3 +70,4 @@ async def test_deliver_webhook_network_error() -> None:
         )
 
         assert mock_post.called
+        mock_logger.error.assert_called_once()

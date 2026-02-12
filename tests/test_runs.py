@@ -83,3 +83,34 @@ async def test_get_run(session: AsyncSession, client: AsyncClient) -> None:
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(run.id)
+
+
+async def test_list_runs_with_pagination(
+    session: AsyncSession, client: AsyncClient
+) -> None:
+    api_key, raw_key = await create_test_api_key(session)
+    automation = await create_test_automation(session, api_key.id)
+
+    for _ in range(5):
+        await create_test_run(session, automation.id, RunStatus.SUCCESS)
+
+    response = await client.get(
+        "/runs",
+        headers={"X-API-Key": raw_key},
+        params={"limit": 2, "offset": 0},
+    )
+    assert response.status_code == 200
+    page1 = response.json()
+    assert len(page1) == 2
+
+    response = await client.get(
+        "/runs",
+        headers={"X-API-Key": raw_key},
+        params={"limit": 2, "offset": 2},
+    )
+    assert response.status_code == 200
+    page2 = response.json()
+    assert len(page2) == 2
+
+    assert page1[0]["id"] != page2[0]["id"]
+    assert page1[1]["id"] != page2[1]["id"]

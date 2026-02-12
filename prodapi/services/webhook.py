@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -6,6 +7,8 @@ from uuid import UUID
 import httpx
 
 from prodapi.schemas.webhook import WebhookPayload
+
+logger = logging.getLogger(__name__)
 
 
 async def deliver_webhook(
@@ -38,9 +41,21 @@ async def deliver_webhook(
                     headers={"Content-Type": "application/json"},
                 )
                 response.raise_for_status()
+                logger.info(
+                    "Webhook delivered to %s for run %s",
+                    webhook_url,
+                    run_id,
+                )
                 return
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
             if attempt == max_retries - 1:
+                logger.error(
+                    "Webhook delivery failed after %d retries to %s for run %s: %s",
+                    max_retries,
+                    webhook_url,
+                    run_id,
+                    str(e),
+                )
                 return
 
             backoff = 2**attempt

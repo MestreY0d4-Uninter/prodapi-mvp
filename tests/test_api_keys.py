@@ -16,18 +16,26 @@ async def test_create_api_key(client: AsyncClient) -> None:
 
 
 async def test_revoke_api_key(session: AsyncSession, client: AsyncClient) -> None:
-    api_key, _ = await create_test_api_key(session, "test-revoke")
+    api_key, raw_key = await create_test_api_key(session, "test-revoke")
 
-    response = await client.post(f"/apikeys/revoke/{api_key.id}")
+    response = await client.post(
+        f"/apikeys/revoke/{api_key.id}",
+        headers={"X-API-Key": raw_key},
+    )
     assert response.status_code == 200
 
     data = response.json()
     assert data["revoked_at"] is not None
 
 
-async def test_revoke_nonexistent_key(client: AsyncClient) -> None:
-    response = await client.post("/apikeys/revoke/00000000-0000-0000-0000-000000000000")
-    assert response.status_code == 404
+async def test_revoke_nonexistent_key(session: AsyncSession, client: AsyncClient) -> None:
+    _, raw_key = await create_test_api_key(session, "test-valid")
+
+    response = await client.post(
+        "/apikeys/revoke/00000000-0000-0000-0000-000000000000",
+        headers={"X-API-Key": raw_key},
+    )
+    assert response.status_code == 403
 
 
 async def test_auth_with_valid_key(session: AsyncSession, client: AsyncClient) -> None:
@@ -45,7 +53,32 @@ async def test_auth_with_invalid_key(client: AsyncClient) -> None:
 async def test_auth_with_revoked_key(session: AsyncSession, client: AsyncClient) -> None:
     api_key, raw_key = await create_test_api_key(session, "test-revoked")
 
-    await client.post(f"/apikeys/revoke/{api_key.id}")
+    await client.post(
+        f"/apikeys/revoke/{api_key.id}",
+        headers={"X-API-Key": raw_key},
+    )
 
     response = await client.get("/automations", headers={"X-API-Key": raw_key})
     assert response.status_code == 401
+
+
+async def test_revoke_with_invalid_key(session: AsyncSession, client: AsyncClient) -> None:
+    api_key, _ = await create_test_api_key(session, "test-no-auth")
+
+    response = await client.post(
+        f"/apikeys/revoke/{api_key.id}",
+        headers={"X-API-Key": "invalid-key"},
+    )
+    assert response.status_code == 401
+
+
+async def test_revoke_another_users_key(session: AsyncSession, client: AsyncClient) -> None:
+    key1, raw_key1 = await create_test_api_key(session, "user1-key")
+    key2, _ = await create_test_api_key(session, "user2-key")
+
+    response = await client.post(
+        f"/apikeys/revoke/{key2.id}",
+        headers={"X-API-Key": raw_key1},
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Cannot revoke another user's API key"

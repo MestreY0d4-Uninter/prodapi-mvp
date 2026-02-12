@@ -57,7 +57,7 @@ async def list_runs(
     automation_id: UUID | None = Query(None),
     status_filter: RunStatus | None = Query(None, alias="status"),
     limit: int = Query(50, ge=1, le=100),
-    cursor: UUID | None = Query(None),
+    offset: int = Query(0, ge=0),
 ) -> list[RunResponse]:
     stmt = (
         select(Run)
@@ -71,10 +71,7 @@ async def list_runs(
     if status_filter:
         stmt = stmt.where(Run.status == status_filter)
 
-    if cursor:
-        stmt = stmt.where(Run.id < cursor)
-
-    stmt = stmt.order_by(Run.queued_at.desc()).limit(limit)
+    stmt = stmt.order_by(Run.queued_at.desc()).offset(offset).limit(limit)
 
     result = await session.execute(stmt)
     runs = result.scalars().all()

@@ -4,8 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from prodapi.models import RunStatus
-
 
 class RunTriggerRequest(BaseModel):
     idempotency_key: str | None = None
@@ -26,10 +24,3 @@ class RunResponse(BaseModel):
     trigger_meta: dict[str, Any]
 
     model_config = {"from_attributes": True}
-
-
-class RunListParams(BaseModel):
-    automation_id: UUID | None = None
-    status: RunStatus | None = None
-    limit: int = 50
-    cursor: UUID | None = None
